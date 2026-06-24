@@ -1,210 +1,426 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.local/ecad-agent/internal_model.schema.json",
-  "title": "ECAD Agent Internal Model",
-  "type": "object",
-  "required": ["schema_version", "project", "components", "nets"],
-  "properties": {
-    "schema_version": {
-      "type": "string"
-    },
-    "project": {
-      "type": "object",
-      "required": ["name", "source_format"],
-      "properties": {
-        "name": {
-          "type": "string",
-          "minLength": 1
-        },
-        "source_format": {
-          "type": "string",
-          "minLength": 1
-        },
-        "metadata": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": true
-    },
-    "components": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/component"
-      }
-    },
-    "nets": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/net"
-      }
-    },
-    "wires": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/wire"
-      },
-      "default": []
-    },
-    "labels": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/label"
-      },
-      "default": []
-    },
-    "warnings": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/warning"
-      },
-      "default": []
-    }
-  },
   "$defs": {
-    "component": {
-      "type": "object",
-      "required": ["ref", "type", "pins"],
+    "Component": {
+      "additionalProperties": false,
+      "description": "A single component / part instance.\n\n``ref`` (the reference designator) must be unique across a project; it is\nthe anchor used by net node references and warnings.",
       "properties": {
         "ref": {
-          "type": "string",
-          "minLength": 1
+          "description": "Reference designator, unique in the project, e.g. 'R1', 'U3', '#PWR01'.",
+          "title": "Ref",
+          "type": "string"
         },
         "type": {
-          "type": "string",
-          "minLength": 1
+          "description": "Generic component type, e.g. 'resistor', 'capacitor', 'ic', 'diode', 'power', 'ground'.",
+          "title": "Type",
+          "type": "string"
         },
         "value": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Component value, e.g. '10k', '100nF', 'TL071'.",
+          "title": "Value"
         },
         "symbol": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source symbol id, e.g. 'Device:R'. See Symbol for library detail.",
+          "title": "Symbol"
         },
         "footprint": {
-          "type": "string"
-        },
-        "source_id": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Footprint id, e.g. 'Resistor_SMD:R_0603'. See Footprint for library detail.",
+          "title": "Footprint"
         },
         "pins": {
-          "type": "array",
+          "description": "Pins on this component.",
           "items": {
-            "$ref": "#/$defs/pin"
-          }
+            "$ref": "#/$defs/Pin"
+          },
+          "title": "Pins",
+          "type": "array"
         },
         "metadata": {
+          "additionalProperties": true,
+          "description": "Free-form source-specific extras that have no first-class field yet.",
+          "title": "Metadata",
           "type": "object"
         }
       },
-      "additionalProperties": true
+      "required": [
+        "ref",
+        "type"
+      ],
+      "title": "Component",
+      "type": "object"
     },
-    "pin": {
-      "type": "object",
-      "required": ["number"],
-      "properties": {
-        "number": {
-          "type": "string",
-          "minLength": 1
-        },
-        "name": {
-          "type": "string"
-        },
-        "net": {
-          "type": "string"
-        },
-        "electrical_type": {
-          "type": "string"
-        },
-        "metadata": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": true
+    "ElectricalType": {
+      "description": "Coarse electrical role of a pin.\n\nKept deliberately small for the MVP. Importers map source-format pin types\nonto these; ``unspecified`` is always a safe default.",
+      "enum": [
+        "input",
+        "output",
+        "bidirectional",
+        "power_in",
+        "power_out",
+        "passive",
+        "unspecified"
+      ],
+      "title": "ElectricalType",
+      "type": "string"
     },
-    "net": {
-      "type": "object",
-      "required": ["name", "nodes"],
-      "properties": {
-        "name": {
-          "type": "string",
-          "minLength": 1
-        },
-        "nodes": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^[^.]+\\.[^.]+$"
-          }
-        },
-        "metadata": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": true
-    },
-    "wire": {
-      "type": "object",
-      "required": ["start", "end"],
-      "properties": {
-        "start": {
-          "$ref": "#/$defs/point"
-        },
-        "end": {
-          "$ref": "#/$defs/point"
-        },
-        "net": {
-          "type": "string"
-        },
-        "metadata": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": true
-    },
-    "label": {
-      "type": "object",
-      "required": ["text"],
+    "Label": {
+      "additionalProperties": false,
+      "description": "A net label placed in the schematic.",
       "properties": {
         "text": {
+          "description": "Label text, usually the net name.",
+          "title": "Text",
           "type": "string"
         },
         "net": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Net this label assigns, if resolved.",
+          "title": "Net"
         },
-        "at": {
-          "$ref": "#/$defs/point"
+        "position": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Point"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
-        "metadata": {
-          "type": "object"
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source label scope: 'local' | 'global' | 'hierarchical' | 'power'.",
+          "title": "Kind"
         }
       },
-      "additionalProperties": true
+      "required": [
+        "text"
+      ],
+      "title": "Label",
+      "type": "object"
     },
-    "warning": {
-      "type": "object",
-      "required": ["code", "message", "severity"],
+    "Net": {
+      "additionalProperties": false,
+      "description": "An electrical net: the set of pins tied together at one potential.",
       "properties": {
-        "code": {
+        "name": {
+          "description": "Net name, e.g. 'VOUT', 'GND'.",
+          "title": "Name",
           "type": "string"
         },
-        "message": {
+        "net_class": {
+          "$ref": "#/$defs/NetClass",
+          "default": "unspecified",
+          "description": "Coarse net classification."
+        },
+        "nodes": {
+          "description": "Pins on this net. May be written as 'R1.2' strings in JSON.",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^.+\\..+$",
+                "description": "Compact 'REF.PIN' form"
+              },
+              {
+                "$ref": "#/$defs/NodeRef"
+              }
+            ]
+          },
+          "title": "Nodes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Net",
+      "type": "object"
+    },
+    "NetClass": {
+      "description": "Coarse classification of a net, used by validation and the linter.",
+      "enum": [
+        "signal",
+        "power",
+        "ground",
+        "unspecified"
+      ],
+      "title": "NetClass",
+      "type": "string"
+    },
+    "NodeRef": {
+      "additionalProperties": false,
+      "description": "A reference to one pin of one component, e.g. component 'R1', pin '2'.",
+      "properties": {
+        "component": {
+          "description": "Reference designator, e.g. 'R1'.",
+          "title": "Component",
+          "type": "string"
+        },
+        "pin": {
+          "description": "Pin number on that component, e.g. '2'.",
+          "title": "Pin",
+          "type": "string"
+        }
+      },
+      "required": [
+        "component",
+        "pin"
+      ],
+      "title": "NodeRef",
+      "type": "object"
+    },
+    "Pin": {
+      "additionalProperties": false,
+      "description": "A single pin on a component.\n\nThe ``number`` field is the *identity* of the pin and is what net node\nreferences point at (e.g. ``R1.2`` -> component ``R1``, pin number ``2``).\nIt is a string, not an int, because real pins are labelled ``1``, ``2``,\n``A3``, ``E13``, etc.",
+      "properties": {
+        "number": {
+          "description": "Stable pin identifier within its component, e.g. '1', '2', 'A3'.",
+          "title": "Number",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Functional pin name where the source provides one, e.g. 'VCC', 'OUT'.",
+          "title": "Name"
+        },
+        "electrical_type": {
+          "$ref": "#/$defs/ElectricalType",
+          "default": "unspecified",
+          "description": "Coarse electrical role; defaults to 'unspecified'."
+        }
+      },
+      "required": [
+        "number"
+      ],
+      "title": "Pin",
+      "type": "object"
+    },
+    "Point": {
+      "additionalProperties": false,
+      "description": "A 2D point in schematic coordinates (units are source-defined).",
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "Point",
+      "type": "object"
+    },
+    "ProjectInfo": {
+      "additionalProperties": false,
+      "description": "Top-level metadata about the design.",
+      "properties": {
+        "name": {
+          "description": "Human project / schematic name.",
+          "title": "Name",
+          "type": "string"
+        },
+        "source_format": {
+          "description": "Origin format: 'kicad' | 'easyeda' | 'eagle' | 'internal'.",
+          "title": "Source Format",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": "0.1.0",
+          "description": "Internal-model schema version this file targets.",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "source_format"
+      ],
+      "title": "ProjectInfo",
+      "type": "object"
+    },
+    "Severity": {
+      "description": "How serious an issue is. 'error' means the model is not trustworthy.",
+      "enum": [
+        "info",
+        "warning",
+        "error"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "Warning": {
+      "additionalProperties": false,
+      "description": "A single machine-readable issue.\n\n``code`` is a stable, greppable identifier (e.g. 'UNCONNECTED_PIN') so the\nAI layer can map it to human-friendly explanations without parsing prose.\n``refs`` names the affected components / nets / pins (e.g. ['U1', 'R1.2']).",
+      "properties": {
+        "code": {
+          "description": "Stable machine code, e.g. 'UNCONNECTED_PIN'.",
+          "title": "Code",
           "type": "string"
         },
         "severity": {
-          "enum": ["info", "warning", "error"]
+          "$ref": "#/$defs/Severity",
+          "default": "warning"
         },
-        "subject": {
+        "message": {
+          "description": "Human-readable description.",
+          "title": "Message",
           "type": "string"
+        },
+        "refs": {
+          "description": "Affected components / nets / pins, e.g. ['U1', 'NET_A', 'R1.2'].",
+          "items": {
+            "type": "string"
+          },
+          "title": "Refs",
+          "type": "array"
         }
       },
-      "additionalProperties": true
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "Warning",
+      "type": "object"
     },
-    "point": {
-      "type": "array",
-      "minItems": 2,
-      "maxItems": 2,
-      "items": {
-        "type": "number"
-      }
+    "Wire": {
+      "additionalProperties": false,
+      "description": "A drawn wire segment / polyline. Graphical; connectivity is in Net.",
+      "properties": {
+        "points": {
+          "description": "Ordered vertices.",
+          "items": {
+            "$ref": "#/$defs/Point"
+          },
+          "title": "Points",
+          "type": "array"
+        },
+        "net": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Net this wire belongs to, if known.",
+          "title": "Net"
+        }
+      },
+      "title": "Wire",
+      "type": "object"
     }
-  }
+  },
+  "additionalProperties": false,
+  "description": "The neutral internal circuit model.",
+  "properties": {
+    "project": {
+      "$ref": "#/$defs/ProjectInfo"
+    },
+    "components": {
+      "items": {
+        "$ref": "#/$defs/Component"
+      },
+      "title": "Components",
+      "type": "array"
+    },
+    "nets": {
+      "items": {
+        "$ref": "#/$defs/Net"
+      },
+      "title": "Nets",
+      "type": "array"
+    },
+    "wires": {
+      "items": {
+        "$ref": "#/$defs/Wire"
+      },
+      "title": "Wires",
+      "type": "array"
+    },
+    "labels": {
+      "items": {
+        "$ref": "#/$defs/Label"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/Warning"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "project"
+  ],
+  "title": "ECAD Neutral Internal Circuit Model",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/ecad-ai-workspace/schema/ecad_model.schema.json"
 }
