@@ -4,7 +4,6 @@ from ecad_agent.ai import build_review_context
 from ecad_agent.model import CircuitProject
 from ecad_agent.validation import validate_project
 
-
 FIXTURES = Path(__file__).resolve().parents[1] / "examples"
 
 

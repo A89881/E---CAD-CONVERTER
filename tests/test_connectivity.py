@@ -3,7 +3,6 @@ from pathlib import Path
 from ecad_agent.model import CircuitProject
 from ecad_agent.validation import compare_connectivity, validate_project
 
-
 FIXTURES = Path(__file__).resolve().parents[1] / "examples"
 
 

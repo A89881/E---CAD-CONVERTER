@@ -3,7 +3,6 @@ from pathlib import Path
 from ecad_agent.exporters import export_internal_json, export_kicad_schematic
 from ecad_agent.model import CircuitProject
 
-
 FIXTURES = Path(__file__).resolve().parents[1] / "examples"
 
 

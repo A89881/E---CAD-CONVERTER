@@ -144,7 +144,9 @@ class CircuitProject:
     def from_dict(cls, payload: dict[str, Any]) -> CircuitProject:
         project_payload = dict(payload.get("project", {}))
         name = str(project_payload.get("name", payload.get("name", "unnamed_project")))
-        source_format = str(project_payload.get("source_format", payload.get("source_format", "unknown")))
+        source_format = str(
+            project_payload.get("source_format", payload.get("source_format", "unknown"))
+        )
 
         return cls(
             name=name,

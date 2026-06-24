@@ -157,7 +157,10 @@ def _net_issues(project: CircuitProject) -> list[ValidationIssue]:
                         code="pin-net-mismatch",
                         severity="error",
                         subject=node,
-                        message=f"Node is listed on net {net.name!r}, but pin declares {pin.net!r}.",
+                        message=(
+                            f"Node is listed on net {net.name!r}, "
+                            f"but pin declares {pin.net!r}."
+                        ),
                     )
                 )
     return issues

@@ -2,7 +2,6 @@ from pathlib import Path
 
 from ecad_agent.model import CircuitProject
 
-
 FIXTURES = Path(__file__).resolve().parents[1] / "examples"
 
 
