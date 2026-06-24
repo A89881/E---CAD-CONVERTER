@@ -1,71 +1,57 @@
-"""Component model."""
+"""Component model.
+
+A Component is one part in the design (resistor, capacitor, IC, power flag,
+connector, ...). It owns its pins. Connectivity between components lives in
+``Net`` objects, not here - this keeps the circuit graph in one place.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Dict, List, Optional
 
-from ecad_agent.model.pin import Pin
+from pydantic import BaseModel, ConfigDict, Field
+
+from .pin import Pin
 
 
-@dataclass(slots=True)
-class Component:
-    """A schematic component with pins and optional source metadata."""
+class Component(BaseModel):
+    """A single component / part instance.
 
-    ref: str
-    type: str
-    value: str | None = None
-    symbol: str | None = None
-    footprint: str | None = None
-    pins: list[Pin] = field(default_factory=list)
-    source_id: str | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
+    ``ref`` (the reference designator) must be unique across a project; it is
+    the anchor used by net node references and warnings.
+    """
 
-    def pin(self, number: str) -> Pin | None:
-        for pin in self.pins:
-            if pin.number == number:
-                return pin
-        return None
+    model_config = ConfigDict(extra="forbid")
 
-    def pin_node_ids(self) -> list[str]:
-        return [pin.node_id(self.ref) for pin in self.pins]
+    ref: str = Field(
+        ...,
+        description="Reference designator, unique in the project, e.g. 'R1', 'U3', '#PWR01'.",
+    )
+    type: str = Field(
+        ...,
+        description="Generic component type, e.g. 'resistor', 'capacitor', 'ic', 'diode', 'power', 'ground'.",
+    )
+    value: Optional[str] = Field(
+        None, description="Component value, e.g. '10k', '100nF', 'TL071'."
+    )
+    symbol: Optional[str] = Field(
+        None, description="Source symbol id, e.g. 'Device:R'. See Symbol for library detail."
+    )
+    footprint: Optional[str] = Field(
+        None, description="Footprint id, e.g. 'Resistor_SMD:R_0603'. See Footprint for library detail."
+    )
+    pins: List[Pin] = Field(
+        default_factory=list, description="Pins on this component."
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Free-form source-specific extras that have no first-class field yet.",
+    )
 
-    def to_dict(self) -> dict[str, Any]:
-        payload: dict[str, Any] = {
-            "ref": self.ref,
-            "type": self.type,
-            "pins": [pin.to_dict() for pin in self.pins],
-        }
-        if self.value is not None:
-            payload["value"] = self.value
-        if self.symbol is not None:
-            payload["symbol"] = self.symbol
-        if self.footprint is not None:
-            payload["footprint"] = self.footprint
-        if self.source_id is not None:
-            payload["source_id"] = self.source_id
-        if self.metadata:
-            payload["metadata"] = self.metadata
-        return payload
+    def pin_numbers(self) -> List[str]:
+        """Return all pin numbers on this component."""
+        return [p.number for p in self.pins]
 
-    @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> Component:
-        raw_pins = payload.get("pins", [])
-        if isinstance(raw_pins, dict):
-            pins = [
-                Pin(number=str(number), net=str(net) if net is not None else None)
-                for number, net in raw_pins.items()
-            ]
-        else:
-            pins = [Pin.from_dict(dict(item)) for item in raw_pins]
-
-        return cls(
-            ref=str(payload["ref"]),
-            type=str(payload.get("type", "unknown")),
-            value=payload.get("value"),
-            symbol=payload.get("symbol"),
-            footprint=payload.get("footprint"),
-            pins=pins,
-            source_id=payload.get("source_id"),
-            metadata=dict(payload.get("metadata", {})),
-        )
+    def get_pin(self, number: str) -> Optional[Pin]:
+        """Return the pin with the given number, or None."""
+        return next((p for p in self.pins if p.number == number), None)

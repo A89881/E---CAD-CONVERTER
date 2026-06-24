@@ -1,0 +1,84 @@
+{
+  "project": {
+    "name": "opamp_amplifier",
+    "source_format": "internal-json",
+    "schema_version": "0.1.0"
+  },
+  "components": [
+    {
+      "ref": "U1",
+      "type": "opamp",
+      "value": "TL071",
+      "symbol": "Amplifier_Operational:TL071",
+      "footprint": "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+      "pins": [
+        { "number": "1", "name": "IN+", "electrical_type": "input" },
+        { "number": "2", "name": "IN-", "electrical_type": "input" },
+        { "number": "3", "name": "OUT", "electrical_type": "output" },
+        { "number": "4", "name": "V+",  "electrical_type": "power_in" },
+        { "number": "5", "name": "V-",  "electrical_type": "power_in" }
+      ]
+    },
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "value": "10k",
+      "symbol": "Device:R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "pins": [
+        { "number": "1", "name": "A", "electrical_type": "passive" },
+        { "number": "2", "name": "B", "electrical_type": "passive" }
+      ]
+    },
+    {
+      "ref": "R2",
+      "type": "resistor",
+      "value": "10k",
+      "symbol": "Device:R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "pins": [
+        { "number": "1", "name": "A", "electrical_type": "passive" },
+        { "number": "2", "name": "B", "electrical_type": "passive" }
+      ]
+    },
+    {
+      "ref": "#PWR01",
+      "type": "power",
+      "value": "VCC",
+      "symbol": "power:VCC",
+      "pins": [ { "number": "1", "name": "VCC", "electrical_type": "power_in" } ]
+    },
+    {
+      "ref": "#PWR02",
+      "type": "power",
+      "value": "VEE",
+      "symbol": "power:VEE",
+      "pins": [ { "number": "1", "name": "VEE", "electrical_type": "power_in" } ]
+    },
+    {
+      "ref": "#PWR03",
+      "type": "ground",
+      "value": "GND",
+      "symbol": "power:GND",
+      "pins": [ { "number": "1", "name": "GND", "electrical_type": "power_in" } ]
+    },
+    {
+      "ref": "#PWR04",
+      "type": "power",
+      "value": "VIN",
+      "symbol": "power:VCC",
+      "pins": [ { "number": "1", "name": "VIN", "electrical_type": "power_in" } ]
+    }
+  ],
+  "nets": [
+    { "name": "VIN",  "net_class": "signal", "nodes": ["#PWR04.1", "U1.1"] },
+    { "name": "VOUT", "net_class": "signal", "nodes": ["U1.3", "R1.1"] },
+    { "name": "FB",   "net_class": "signal", "nodes": ["R1.2", "R2.1", "U1.2"] },
+    { "name": "GND",  "net_class": "ground", "nodes": ["R2.2", "#PWR03.1"] },
+    { "name": "VCC",  "net_class": "power",  "nodes": ["#PWR01.1", "U1.4"] },
+    { "name": "VEE",  "net_class": "power",  "nodes": ["#PWR02.1", "U1.5"] }
+  ],
+  "wires": [],
+  "labels": [],
+  "warnings": []
+}

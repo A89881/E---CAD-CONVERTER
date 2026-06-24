@@ -1,44 +1,53 @@
-"""Pin model."""
+"""Pin model.
+
+A Pin is a connection point on a Component. Its ``number`` is the stable
+identifier used everywhere connectivity is referenced (see ``net.NodeRef``).
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
-@dataclass(slots=True)
-class Pin:
-    """A component pin and its logical net assignment."""
+class ElectricalType(str, Enum):
+    """Coarse electrical role of a pin.
 
-    number: str
-    name: str | None = None
-    net: str | None = None
-    electrical_type: str | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
+    Kept deliberately small for the MVP. Importers map source-format pin types
+    onto these; ``unspecified`` is always a safe default.
+    """
 
-    def node_id(self, component_ref: str) -> str:
-        """Return the canonical graph node ID for this pin."""
+    INPUT = "input"
+    OUTPUT = "output"
+    BIDIRECTIONAL = "bidirectional"
+    POWER_IN = "power_in"
+    POWER_OUT = "power_out"
+    PASSIVE = "passive"
+    UNSPECIFIED = "unspecified"
 
-        return f"{component_ref}.{self.number}"
 
-    def to_dict(self) -> dict[str, Any]:
-        payload: dict[str, Any] = {"number": self.number}
-        if self.name is not None:
-            payload["name"] = self.name
-        if self.net is not None:
-            payload["net"] = self.net
-        if self.electrical_type is not None:
-            payload["electrical_type"] = self.electrical_type
-        if self.metadata:
-            payload["metadata"] = self.metadata
-        return payload
+class Pin(BaseModel):
+    """A single pin on a component.
 
-    @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> Pin:
-        return cls(
-            number=str(payload["number"]),
-            name=payload.get("name"),
-            net=payload.get("net"),
-            electrical_type=payload.get("electrical_type"),
-            metadata=dict(payload.get("metadata", {})),
-        )
+    The ``number`` field is the *identity* of the pin and is what net node
+    references point at (e.g. ``R1.2`` -> component ``R1``, pin number ``2``).
+    It is a string, not an int, because real pins are labelled ``1``, ``2``,
+    ``A3``, ``E13``, etc.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    number: str = Field(
+        ...,
+        description="Stable pin identifier within its component, e.g. '1', '2', 'A3'.",
+    )
+    name: Optional[str] = Field(
+        None,
+        description="Functional pin name where the source provides one, e.g. 'VCC', 'OUT'.",
+    )
+    electrical_type: ElectricalType = Field(
+        default=ElectricalType.UNSPECIFIED,
+        description="Coarse electrical role; defaults to 'unspecified'.",
+    )

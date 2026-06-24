@@ -1,0 +1,74 @@
+{
+  "project": {
+    "name": "mosfet_switch",
+    "source_format": "internal-json",
+    "schema_version": "0.1.0"
+  },
+  "components": [
+    {
+      "ref": "Q1",
+      "type": "mosfet_n",
+      "value": "BSS138",
+      "symbol": "Device:Q_NMOS_GSD",
+      "footprint": "Package_TO_SOT_SMD:SOT-23",
+      "pins": [
+        { "number": "1", "name": "G", "electrical_type": "input" },
+        { "number": "2", "name": "S", "electrical_type": "passive" },
+        { "number": "3", "name": "D", "electrical_type": "passive" }
+      ]
+    },
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "value": "10k",
+      "symbol": "Device:R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "pins": [
+        { "number": "1", "name": "A", "electrical_type": "passive" },
+        { "number": "2", "name": "B", "electrical_type": "passive" }
+      ]
+    },
+    {
+      "ref": "R2",
+      "type": "resistor",
+      "value": "1k",
+      "symbol": "Device:R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "pins": [
+        { "number": "1", "name": "A", "electrical_type": "passive" },
+        { "number": "2", "name": "B", "electrical_type": "passive" }
+      ]
+    },
+    {
+      "ref": "#PWR01",
+      "type": "power",
+      "value": "VDD",
+      "symbol": "power:VDD",
+      "pins": [ { "number": "1", "name": "VDD", "electrical_type": "power_in" } ]
+    },
+    {
+      "ref": "#PWR02",
+      "type": "power",
+      "value": "IN",
+      "symbol": "power:VCC",
+      "pins": [ { "number": "1", "name": "IN", "electrical_type": "power_in" } ]
+    },
+    {
+      "ref": "#PWR03",
+      "type": "ground",
+      "value": "GND",
+      "symbol": "power:GND",
+      "pins": [ { "number": "1", "name": "GND", "electrical_type": "power_in" } ]
+    }
+  ],
+  "nets": [
+    { "name": "VDD",   "net_class": "power",  "nodes": ["#PWR01.1", "R2.1"] },
+    { "name": "DRAIN", "net_class": "signal", "nodes": ["R2.2", "Q1.3"] },
+    { "name": "GATE",  "net_class": "signal", "nodes": ["R1.2", "Q1.1"] },
+    { "name": "IN",    "net_class": "signal", "nodes": ["#PWR02.1", "R1.1"] },
+    { "name": "GND",   "net_class": "ground", "nodes": ["Q1.2", "#PWR03.1"] }
+  ],
+  "wires": [],
+  "labels": [],
+  "warnings": []
+}

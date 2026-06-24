@@ -1,11 +1,8 @@
 {
-  "schema_version": "0.1.0",
   "project": {
     "name": "voltage_divider",
     "source_format": "internal-json",
-    "metadata": {
-      "description": "Two-resistor voltage divider used as a minimal connectivity fixture."
-    }
+    "schema_version": "0.1.0"
   },
   "components": [
     {
@@ -15,16 +12,8 @@
       "symbol": "Device:R",
       "footprint": "Resistor_SMD:R_0603_1608Metric",
       "pins": [
-        {
-          "number": "1",
-          "name": "A",
-          "net": "VIN"
-        },
-        {
-          "number": "2",
-          "name": "B",
-          "net": "VOUT"
-        }
+        { "number": "1", "name": "A", "electrical_type": "passive" },
+        { "number": "2", "name": "B", "electrical_type": "passive" }
       ]
     },
     {
@@ -34,50 +23,35 @@
       "symbol": "Device:R",
       "footprint": "Resistor_SMD:R_0603_1608Metric",
       "pins": [
-        {
-          "number": "1",
-          "name": "A",
-          "net": "VOUT"
-        },
-        {
-          "number": "2",
-          "name": "B",
-          "net": "GND"
-        }
+        { "number": "1", "name": "A", "electrical_type": "passive" },
+        { "number": "2", "name": "B", "electrical_type": "passive" }
       ]
+    },
+    {
+      "ref": "#PWR01",
+      "type": "power",
+      "value": "VIN",
+      "symbol": "power:VCC",
+      "pins": [ { "number": "1", "name": "VIN", "electrical_type": "power_in" } ]
+    },
+    {
+      "ref": "#PWR02",
+      "type": "ground",
+      "value": "GND",
+      "symbol": "power:GND",
+      "pins": [ { "number": "1", "name": "GND", "electrical_type": "power_in" } ]
     }
   ],
   "nets": [
-    {
-      "name": "VIN",
-      "nodes": ["R1.1"]
-    },
-    {
-      "name": "VOUT",
-      "nodes": ["R1.2", "R2.1"]
-    },
-    {
-      "name": "GND",
-      "nodes": ["R2.2"]
-    }
+    { "name": "VIN",  "net_class": "power",  "nodes": ["#PWR01.1", "R1.1"] },
+    { "name": "VOUT", "net_class": "signal", "nodes": ["R1.2", "R2.1"] },
+    { "name": "GND",  "net_class": "ground", "nodes": ["R2.2", "#PWR02.1"] }
   ],
   "wires": [],
   "labels": [
-    {
-      "text": "VIN",
-      "net": "VIN",
-      "at": [20.0, 20.0]
-    },
-    {
-      "text": "VOUT",
-      "net": "VOUT",
-      "at": [45.0, 20.0]
-    },
-    {
-      "text": "GND",
-      "net": "GND",
-      "at": [45.0, 45.0]
-    }
+    { "text": "VIN",  "net": "VIN",  "position": {"x": 20.0, "y": 20.0} },
+    { "text": "VOUT", "net": "VOUT", "position": {"x": 45.0, "y": 20.0} },
+    { "text": "GND",  "net": "GND",  "position": {"x": 45.0, "y": 45.0} }
   ],
   "warnings": []
 }

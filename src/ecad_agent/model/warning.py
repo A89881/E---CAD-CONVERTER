@@ -1,40 +1,57 @@
-"""Warning model."""
+"""Warning and ValidationResult models.
+
+Every importer, the integrity checker, and (later) the validation engine speak
+the same Warning vocabulary so the AI layer and reports have one structure to
+consume.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Literal
+from enum import Enum
+from typing import List, Optional
 
-Severity = Literal["info", "warning", "error"]
+from pydantic import BaseModel, ConfigDict, Field
 
 
-@dataclass(slots=True)
-class WarningMessage:
-    """A warning carried through import, validation, export, or AI review."""
+class Severity(str, Enum):
+    """How serious an issue is. 'error' means the model is not trustworthy."""
 
-    code: str
-    message: str
-    severity: Severity = "warning"
-    subject: str | None = None
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
 
-    def to_dict(self) -> dict[str, Any]:
-        payload: dict[str, Any] = {
-            "code": self.code,
-            "message": self.message,
-            "severity": self.severity,
-        }
-        if self.subject is not None:
-            payload["subject"] = self.subject
-        return payload
+
+class Warning(BaseModel):
+    """A single machine-readable issue.
+
+    ``code`` is a stable, greppable identifier (e.g. 'UNCONNECTED_PIN') so the
+    AI layer can map it to human-friendly explanations without parsing prose.
+    ``refs`` names the affected components / nets / pins (e.g. ['U1', 'R1.2']).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(..., description="Stable machine code, e.g. 'UNCONNECTED_PIN'.")
+    severity: Severity = Field(default=Severity.WARNING)
+    message: str = Field(..., description="Human-readable description.")
+    refs: List[str] = Field(
+        default_factory=list,
+        description="Affected components / nets / pins, e.g. ['U1', 'NET_A', 'R1.2'].",
+    )
+
+
+class ValidationResult(BaseModel):
+    """Outcome of a validation pass. Filled in by Workstream D; defined here so
+    the model package owns the shared vocabulary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    passed: bool = Field(..., description="True if no error-severity issues were found.")
+    summary: Optional[str] = Field(None, description="One-line human summary.")
+    warnings: List[Warning] = Field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> WarningMessage:
-        severity = payload.get("severity", "warning")
-        if severity not in {"info", "warning", "error"}:
-            severity = "warning"
-        return cls(
-            code=str(payload["code"]),
-            message=str(payload["message"]),
-            severity=severity,
-            subject=payload.get("subject"),
-        )
+    def from_warnings(cls, warnings: List[Warning], summary: Optional[str] = None) -> "ValidationResult":
+        """Build a result; ``passed`` is False iff any warning is an error."""
+        passed = not any(w.severity is Severity.ERROR for w in warnings)
+        return cls(passed=passed, warnings=warnings, summary=summary)
