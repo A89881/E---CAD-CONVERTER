@@ -1,0 +1,11 @@
+services:
+  ecad-agent:
+    build:
+      context: .
+    image: ecad-agent:local
+    env_file:
+      - .env.example
+    volumes:
+      - ./datasets:/app/datasets
+      - ./examples:/app/examples:ro
+    command: ["--help"]

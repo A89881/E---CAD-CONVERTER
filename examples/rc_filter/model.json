@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.1.0",
+  "project": {
+    "name": "rc_filter",
+    "source_format": "internal-json",
+    "metadata": {
+      "description": "Simple RC low-pass filter fixture."
+    }
+  },
+  "components": [
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "value": "1k",
+      "symbol": "Device:R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "pins": [
+        {
+          "number": "1",
+          "name": "A",
+          "net": "VIN"
+        },
+        {
+          "number": "2",
+          "name": "B",
+          "net": "VOUT"
+        }
+      ]
+    },
+    {
+      "ref": "C1",
+      "type": "capacitor",
+      "value": "100n",
+      "symbol": "Device:C",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "pins": [
+        {
+          "number": "1",
+          "name": "A",
+          "net": "VOUT"
+        },
+        {
+          "number": "2",
+          "name": "B",
+          "net": "GND"
+        }
+      ]
+    }
+  ],
+  "nets": [
+    {
+      "name": "VIN",
+      "nodes": ["R1.1"]
+    },
+    {
+      "name": "VOUT",
+      "nodes": ["R1.2", "C1.1"]
+    },
+    {
+      "name": "GND",
+      "nodes": ["C1.2"]
+    }
+  ],
+  "wires": [],
+  "labels": [],
+  "warnings": []
+}
