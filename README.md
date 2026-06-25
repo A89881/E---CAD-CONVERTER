@@ -16,6 +16,8 @@ The first milestone is deliberately narrow: represent a schematic as structured 
 - Connectivity validation and graph comparison utilities
 - A starter KiCad schematic exporter
 - AI context builders that keep LLMs grounded in structured data
+- Copilot core with context budgets, provider routing, and structured answers
+- Thin wrapper scaffolds for KiCad, EasyEDA, EAGLE, and Altium
 - Example circuits and tests
 - GitHub Actions CI and container build workflows
 - Docker and devcontainer files for cloud-friendly development
@@ -61,12 +63,19 @@ pytest
 ecad-agent validate examples/voltage_divider/model.json
 ecad-agent report examples/voltage_divider/model.json --out datasets/reports/voltage_divider.md
 ecad-agent export-kicad examples/voltage_divider/model.json --out datasets/processed/voltage_divider.kicad_sch
+ecad-agent ask examples/voltage_divider/model.json "What does R1 do?" --component R1 --budget small --json
 ```
 
 ## Architecture
 
 ```text
-Input ECAD project
+KiCad / EasyEDA / EAGLE / Altium
+        |
+        v
+Thin ECAD wrapper
+        |
+        v
+Project sync layer
         |
         v
 Format detector
@@ -81,10 +90,10 @@ Neutral internal ECAD model
 Validation engine
         |
         v
-AI agent layer
+Copilot engine / AI provider router
         |
         v
-Exporter
+Export / simulation / prediction tools
         |
         v
 Output ECAD project / report / netlist

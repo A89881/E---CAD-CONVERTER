@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from ecad_agent.model import CircuitProject, Pin
+from ecad_agent.model import CircuitProject, NodeRef, Pin
 from ecad_agent.validation.report import ValidationIssue, ValidationReport
 
 
@@ -19,7 +19,7 @@ def validate_project(project: CircuitProject) -> ValidationReport:
         "component_count": len(project.components),
         "net_count": len(project.nets),
         "pin_count": sum(len(component.pins) for component in project.components),
-        "connected_pin_count": len(project.pin_to_net_mapping()),
+        "connected_pin_count": len(project.node_map()),
         "warning_count": len(project.warnings),
     }
     return ValidationReport.from_issues(issues, stats)
@@ -52,8 +52,7 @@ def _component_reference_issues(project: CircuitProject) -> list[ValidationIssue
 
 def _pin_issues(project: CircuitProject) -> list[ValidationIssue]:
     issues: list[ValidationIssue] = []
-    net_names = {net.name for net in project.nets}
-    net_nodes = {node for net in project.nets for node in net.nodes}
+    connected_nodes = set(project.node_map())
 
     for component in project.components:
         pin_numbers = [pin.number for pin in component.pins]
@@ -69,34 +68,14 @@ def _pin_issues(project: CircuitProject) -> list[ValidationIssue]:
             )
 
         for pin in component.pins:
-            node_id = pin.node_id(component.ref)
-            if pin.net is None:
+            node_id = f"{component.ref}.{pin.number}"
+            if node_id not in connected_nodes:
                 issues.append(
                     ValidationIssue(
                         code="unconnected-pin",
                         severity="info",
                         subject=node_id,
                         message="Pin has no declared net.",
-                    )
-                )
-                continue
-
-            if pin.net not in net_names:
-                issues.append(
-                    ValidationIssue(
-                        code="missing-net",
-                        severity="error",
-                        subject=node_id,
-                        message=f"Pin declares net {pin.net!r}, but that net is not listed.",
-                    )
-                )
-            elif node_id not in net_nodes:
-                issues.append(
-                    ValidationIssue(
-                        code="pin-net-not-reciprocal",
-                        severity="error",
-                        subject=node_id,
-                        message=f"Pin declares net {pin.net!r}, but the net does not include it.",
                     )
                 )
     return issues
@@ -129,7 +108,8 @@ def _net_issues(project: CircuitProject) -> list[ValidationIssue]:
                 )
             )
 
-        node_duplicates = [node for node, count in Counter(net.nodes).items() if count > 1]
+        node_strings = [_node_id(node) for node in net.nodes]
+        node_duplicates = [node for node, count in Counter(node_strings).items() if count > 1]
         for node in node_duplicates:
             issues.append(
                 ValidationIssue(
@@ -140,7 +120,7 @@ def _net_issues(project: CircuitProject) -> list[ValidationIssue]:
                 )
             )
 
-        for node in net.nodes:
+        for node in node_strings:
             pin = known_nodes.get(node)
             if pin is None:
                 issues.append(
@@ -149,18 +129,6 @@ def _net_issues(project: CircuitProject) -> list[ValidationIssue]:
                         severity="error",
                         subject=node,
                         message=f"Net {net.name!r} references a component pin that is not defined.",
-                    )
-                )
-            elif pin.net is not None and pin.net != net.name:
-                issues.append(
-                    ValidationIssue(
-                        code="pin-net-mismatch",
-                        severity="error",
-                        subject=node,
-                        message=(
-                            f"Node is listed on net {net.name!r}, "
-                            f"but pin declares {pin.net!r}."
-                        ),
                     )
                 )
     return issues
@@ -192,7 +160,11 @@ def _missing_metadata_issues(project: CircuitProject) -> list[ValidationIssue]:
 
 def _known_nodes(project: CircuitProject) -> dict[str, Pin]:
     return {
-        pin.node_id(component.ref): pin
+        f"{component.ref}.{pin.number}": pin
         for component in project.components
         for pin in component.pins
     }
+
+
+def _node_id(node: NodeRef | str) -> str:
+    return node.as_string() if isinstance(node, NodeRef) else node

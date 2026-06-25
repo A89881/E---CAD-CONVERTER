@@ -20,10 +20,19 @@ def build_review_context(
             "source_format": project.source_format,
             "schema_version": project.schema_version,
         },
-        "components": [component.to_dict() for component in project.components],
-        "nets": [net.to_dict() for net in project.nets],
+        "components": [
+            component.model_dump(mode="json", exclude_none=True)
+            for component in project.components
+        ],
+        "nets": [
+            net.model_dump(mode="json", exclude_none=True)
+            for net in project.nets
+        ],
         "connectivity": canonical_connectivity(project),
-        "warnings": [warning.to_dict() for warning in project.warnings],
+        "warnings": [
+            warning.model_dump(mode="json", exclude_none=True)
+            for warning in project.warnings
+        ],
     }
     if validation_report is not None:
         context["validation"] = validation_report.to_dict()

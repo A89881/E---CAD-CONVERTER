@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from ecad_agent.model import (
     CircuitProject,
     Component,
@@ -15,6 +14,7 @@ from ecad_agent.model import (
     ProjectInfo,
     Severity,
 )
+from pydantic import ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = sorted((ROOT / "examples").glob("*/model.json"))
@@ -41,7 +41,7 @@ def test_examples_round_trip(path: Path) -> None:
 # ---- node reference parsing --------------------------------------------------
 
 def test_noderef_string_coercion() -> None:
-    net = Net(name="N", nodes=["R1.2", "C1.1"])
+    net = Net(name="N", nodes=[NodeRef.from_string("R1.2"), NodeRef.from_string("C1.1")])
     assert net.nodes[0] == NodeRef(component="R1", pin="2")
     assert net.nodes[0].as_string() == "R1.2"
 
@@ -61,15 +61,26 @@ def test_noderef_rejects_garbage() -> None:
 # ---- integrity checks fire on bad input -------------------------------------
 
 def _two_pin(ref: str, value: str = "10k") -> Component:
-    return Component(ref=ref, type="resistor", value=value,
-                     pins=[Pin(number="1"), Pin(number="2")])
+    return Component(
+        ref=ref,
+        type="resistor",
+        value=value,
+        symbol=None,
+        footprint=None,
+        pins=[Pin(number="1", name=None), Pin(number="2", name=None)],
+    )
 
 
 def test_detects_duplicate_ref() -> None:
     c = CircuitProject(
         project=ProjectInfo(name="t", source_format="internal"),
         components=[_two_pin("R1"), _two_pin("R1")],
-        nets=[Net(name="N", nodes=["R1.1", "R1.2"])],
+        nets=[
+            Net(
+                name="N",
+                nodes=[NodeRef.from_string("R1.1"), NodeRef.from_string("R1.2")],
+            )
+        ],
     )
     codes = {w.code for w in c.check_integrity()}
     assert "DUPLICATE_REF" in codes
@@ -80,8 +91,14 @@ def test_detects_unknown_component_and_pin() -> None:
         project=ProjectInfo(name="t", source_format="internal"),
         components=[_two_pin("R1")],
         nets=[
-            Net(name="A", nodes=["R1.1", "R9.1"]),   # R9 does not exist
-            Net(name="B", nodes=["R1.2", "R1.7"]),   # pin 7 does not exist
+            Net(
+                name="A",
+                nodes=[NodeRef.from_string("R1.1"), NodeRef.from_string("R9.1")],
+            ),  # R9 does not exist
+            Net(
+                name="B",
+                nodes=[NodeRef.from_string("R1.2"), NodeRef.from_string("R1.7")],
+            ),  # pin 7 does not exist
         ],
     )
     codes = {w.code for w in c.check_integrity()}
@@ -93,7 +110,7 @@ def test_detects_unconnected_pin_and_dangling_net() -> None:
     c = CircuitProject(
         project=ProjectInfo(name="t", source_format="internal"),
         components=[_two_pin("R1")],
-        nets=[Net(name="A", nodes=["R1.1"])],  # single-node net, R1.2 floating
+        nets=[Net(name="A", nodes=[NodeRef.from_string("R1.1")])],
     )
     codes = {w.code for w in c.check_integrity()}
     assert "DANGLING_NET" in codes
@@ -111,5 +128,5 @@ def test_node_map() -> None:
 # ---- schema hygiene ----------------------------------------------------------
 
 def test_extra_fields_rejected() -> None:
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         Pin.model_validate({"number": "1", "not_a_field": 7})

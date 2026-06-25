@@ -12,7 +12,7 @@ from ecad_agent.model.warning import Severity
 class ValidationIssue:
     code: str
     message: str
-    severity: Severity = "warning"
+    severity: Severity | str = Severity.WARNING
     subject: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -38,7 +38,10 @@ class ValidationReport:
         issues: list[ValidationIssue],
         stats: dict[str, Any] | None = None,
     ) -> ValidationReport:
-        success = all(issue.severity != "error" for issue in issues)
+        success = all(
+            issue.severity != Severity.ERROR and issue.severity != "error"
+            for issue in issues
+        )
         return cls(success=success, issues=issues, stats=stats or {})
 
     def to_dict(self) -> dict[str, Any]:

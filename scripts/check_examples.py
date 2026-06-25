@@ -31,10 +31,11 @@ def main() -> int:
         status = "PASS" if not errors and roundtrip_ok else "FAIL"
         if status == "FAIL":
             failures += 1
+        roundtrip = "ok" if roundtrip_ok else "BROKEN"
         print(
             f"[{status}] {circuit.project.name:18s} "
             f"components={circuit.component_count():2d} nets={circuit.net_count():2d} "
-            f"errors={len(errors)} warnings={len(warns)} roundtrip={'ok' if roundtrip_ok else 'BROKEN'}"
+            f"errors={len(errors)} warnings={len(warns)} roundtrip={roundtrip}"
         )
         for w in issues:
             print(f"         - {w.severity.value:7s} {w.code:18s} {w.message}")

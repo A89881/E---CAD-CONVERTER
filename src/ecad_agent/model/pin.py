@@ -7,7 +7,6 @@ identifier used everywhere connectivity is referenced (see ``net.NodeRef``).
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -43,7 +42,7 @@ class Pin(BaseModel):
         ...,
         description="Stable pin identifier within its component, e.g. '1', '2', 'A3'.",
     )
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         description="Functional pin name where the source provides one, e.g. 'VCC', 'OUT'.",
     )

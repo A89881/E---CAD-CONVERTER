@@ -1,9 +1,20 @@
 # Architecture
 
+## ECAD Copilot Extension Framework
+
+The ECAD tool extension is a thin wrapper. The backend is the intelligence
+layer. The neutral circuit model is the shared language between them.
+
 ## System Flow
 
 ```text
-Input ECAD project
+KiCad / EasyEDA / EAGLE / Altium
+        |
+        v
+ECAD extension / wrapper
+        |
+        v
+Project sync layer
         |
         v
 Format detector
@@ -18,10 +29,10 @@ Neutral internal ECAD model
 Validation engine
         |
         v
-AI agent layer
+Copilot engine
         |
         v
-Exporter
+Tools: conversion, review, simulation, prediction, documentation
         |
         v
 Output ECAD project / report / netlist
@@ -37,6 +48,17 @@ Identifies whether a file or project looks like internal JSON, KiCad, EasyEDA, E
 
 Parse source formats into the neutral model. Importers should preserve source references and emit warnings for unsupported objects.
 
+### Wrappers
+
+Wrappers live under `wrappers/` and should stay thin. They read the host ECAD
+project, send files or a project sync envelope to the backend, display warnings
+and copilot responses, and apply only user-approved changes.
+
+### Project Sync Layer
+
+The sync layer packages wrapper identity, source format, files, capabilities,
+and the internal circuit model into a backend-friendly envelope.
+
 ### Neutral Model
 
 Represents electrical intent independently from any ECAD tool. The core relationship is:
@@ -49,9 +71,21 @@ Component -> Pin -> Net
 
 Checks model consistency and compares connectivity before and after conversion. The first validation target is graph equivalence.
 
-### AI Agent Layer
+### Copilot Engine
 
-Builds structured context for explanation, review, mapping suggestions, and report generation. AI can propose; validators must verify.
+Builds structured context for explanation, review, mapping suggestions, and
+report generation. It uses context budgets:
+
+- small: selected component/net plus nearby graph
+- medium: schematic summary, components, nets, warnings
+- large: full model and validation context
+
+AI can propose; validators must verify.
+
+### AI Provider Router
+
+The copilot calls a provider-neutral interface so OpenAI, Anthropic, Google, or
+local models can be selected without changing the rest of the app.
 
 ### Exporters
 

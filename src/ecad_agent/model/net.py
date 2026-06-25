@@ -14,9 +14,8 @@ Design decision (the "pin naming format" question from the kickoff):
 from __future__ import annotations
 
 from enum import Enum
-from typing import List
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class NetClass(str, Enum):
@@ -41,7 +40,7 @@ class NodeRef(BaseModel):
         return f"{self.component}.{self.pin}"
 
     @classmethod
-    def from_string(cls, s: str) -> "NodeRef":
+    def from_string(cls, s: str) -> NodeRef:
         """Parse 'REF.PIN' into a NodeRef. Splits on the *last* dot."""
         component, sep, pin = s.rpartition(".")
         if not sep or not component or not pin:
@@ -58,7 +57,7 @@ class Net(BaseModel):
     net_class: NetClass = Field(
         default=NetClass.UNSPECIFIED, description="Coarse net classification."
     )
-    nodes: List[NodeRef] = Field(
+    nodes: list[NodeRef] = Field(
         default_factory=list,
         description="Pins on this net. May be written as 'R1.2' strings in JSON.",
     )
@@ -70,3 +69,8 @@ class Net(BaseModel):
         if not isinstance(value, list):
             return value
         return [NodeRef.from_string(item) if isinstance(item, str) else item for item in value]
+
+    @field_serializer("nodes")
+    def _serialize_nodes(self, nodes: list[NodeRef]) -> list[str]:
+        """Write nodes in compact wrapper-friendly 'REF.PIN' form."""
+        return [node.as_string() for node in nodes]

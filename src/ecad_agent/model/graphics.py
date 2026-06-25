@@ -7,8 +7,6 @@ For the first MVP they are optional - connectivity comes from Net, not Wire.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -26,8 +24,8 @@ class Wire(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    points: List[Point] = Field(default_factory=list, description="Ordered vertices.")
-    net: Optional[str] = Field(None, description="Net this wire belongs to, if known.")
+    points: list[Point] = Field(default_factory=list, description="Ordered vertices.")
+    net: str | None = Field(None, description="Net this wire belongs to, if known.")
 
 
 class Label(BaseModel):
@@ -36,9 +34,9 @@ class Label(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     text: str = Field(..., description="Label text, usually the net name.")
-    net: Optional[str] = Field(None, description="Net this label assigns, if resolved.")
-    position: Optional[Point] = None
-    kind: Optional[str] = Field(
+    net: str | None = Field(None, description="Net this label assigns, if resolved.")
+    position: Point | None = None
+    kind: str | None = Field(
         None, description="Source label scope: 'local' | 'global' | 'hierarchical' | 'power'."
     )
 
@@ -49,9 +47,9 @@ class Symbol(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(..., description="Library id, e.g. 'Device:R'.")
-    name: Optional[str] = None
-    library: Optional[str] = None
-    pin_count: Optional[int] = None
+    name: str | None = None
+    library: str | None = None
+    pin_count: int | None = None
 
 
 class Footprint(BaseModel):
@@ -60,5 +58,5 @@ class Footprint(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(..., description="Library id, e.g. 'Resistor_SMD:R_0603'.")
-    name: Optional[str] = None
-    library: Optional[str] = None
+    name: str | None = None
+    library: str | None = None

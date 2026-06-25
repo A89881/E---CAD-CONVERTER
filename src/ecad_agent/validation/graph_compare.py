@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ecad_agent.model import CircuitProject
+from ecad_agent.model import CircuitProject, NodeRef
 from ecad_agent.validation.report import ValidationIssue, ValidationReport
 
 
@@ -10,9 +10,13 @@ def canonical_connectivity(project: CircuitProject) -> dict[str, tuple[str, ...]
     """Return a stable net-to-node mapping for comparison and snapshots."""
 
     return {
-        net.name: tuple(sorted(set(net.nodes)))
+        net.name: tuple(sorted({_node_id(node) for node in net.nodes}))
         for net in sorted(project.nets, key=lambda item: item.name)
     }
+
+
+def _node_id(node: NodeRef | str) -> str:
+    return node.as_string() if isinstance(node, NodeRef) else node
 
 
 def compare_connectivity(

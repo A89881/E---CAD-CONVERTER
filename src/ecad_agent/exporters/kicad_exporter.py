@@ -38,7 +38,7 @@ def render_kicad_schematic(project: CircuitProject) -> str:
 
     for index, net in enumerate(project.nets):
         y = 170.0 + index * 5.0
-        node_summary = ", ".join(net.nodes) if net.nodes else "(empty)"
+        node_summary = ", ".join(node.as_string() for node in net.nodes) if net.nodes else "(empty)"
         lines.append(
             f'  (text "Net {_escape(net.name)}: {_escape(node_summary)}" '
             f'(at 15 {y:.2f} 0) (effects (font (size 1.27 1.27))))'

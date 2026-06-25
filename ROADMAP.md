@@ -42,9 +42,19 @@
 ## Milestone 5: AI Review Layer
 
 - Structured context builder
+- AI provider interface and router
+- Offline local provider for development and tests
+- `ecad-agent ask` command over internal JSON
 - Circuit explanation prompt
 - Warning explanation prompt
 - Review report grounded in components, pins, nets, and validation results
+
+## Milestone 6: Wrapper And Backend API
+
+- KiCad thin wrapper prototype
+- Project sync envelope
+- Basic FastAPI backend route
+- Wrapper-driven ask/review workflow
 
 ## Later Directions
 

@@ -8,7 +8,6 @@ consume.
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -34,7 +33,7 @@ class Warning(BaseModel):
     code: str = Field(..., description="Stable machine code, e.g. 'UNCONNECTED_PIN'.")
     severity: Severity = Field(default=Severity.WARNING)
     message: str = Field(..., description="Human-readable description.")
-    refs: List[str] = Field(
+    refs: list[str] = Field(
         default_factory=list,
         description="Affected components / nets / pins, e.g. ['U1', 'NET_A', 'R1.2'].",
     )
@@ -47,11 +46,15 @@ class ValidationResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     passed: bool = Field(..., description="True if no error-severity issues were found.")
-    summary: Optional[str] = Field(None, description="One-line human summary.")
-    warnings: List[Warning] = Field(default_factory=list)
+    summary: str | None = Field(None, description="One-line human summary.")
+    warnings: list[Warning] = Field(default_factory=list)
 
     @classmethod
-    def from_warnings(cls, warnings: List[Warning], summary: Optional[str] = None) -> "ValidationResult":
+    def from_warnings(
+        cls,
+        warnings: list[Warning],
+        summary: str | None = None,
+    ) -> ValidationResult:
         """Build a result; ``passed`` is False iff any warning is an error."""
         passed = not any(w.severity is Severity.ERROR for w in warnings)
         return cls(passed=passed, warnings=warnings, summary=summary)
