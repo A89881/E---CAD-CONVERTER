@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .board import BoardLayout
 from .component import Component
 from .graphics import Label, Wire
 from .net import Net
@@ -58,6 +59,13 @@ class CircuitProject(BaseModel):
     labels: List[Label] = Field(default_factory=list)
     warnings: List[Warning] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    pcb: Optional[BoardLayout] = Field(
+        None,
+        description=(
+            "Physical PCB layer. When absent the model is schematic-only and still valid. "
+            "See docs/internal_model.md for the PCB layer reference."
+        ),
+    )
 
     # ---- lookups -----------------------------------------------------------
 
@@ -151,6 +159,54 @@ class CircuitProject(BaseModel):
                         code="UNCONNECTED_PIN", severity=Severity.WARNING,
                         message=f"Pin {node} ({p.name or 'unnamed'}) is not on any net.",
                         refs=[node],
+                    ))
+
+        # PCB layer integrity (skipped when pcb is None — schematic-only is valid).
+        if self.pcb is not None:
+            placed_refs: Dict[str, int] = {}
+            for placement in self.pcb.placements:
+                placed_refs[placement.ref] = placed_refs.get(placement.ref, 0) + 1
+                if by_ref.get(placement.ref) is None:
+                    out.append(Warning(
+                        code="PCB_UNKNOWN_REF", severity=Severity.ERROR,
+                        message=f"PCB placement references unknown component '{placement.ref}'.",
+                        refs=[placement.ref],
+                    ))
+
+            for ref, count in placed_refs.items():
+                if count > 1:
+                    out.append(Warning(
+                        code="PCB_DUPLICATE_PLACEMENT", severity=Severity.ERROR,
+                        message=f"Component '{ref}' has {count} placements; expected at most 1.",
+                        refs=[ref],
+                    ))
+
+            for placement in self.pcb.placements:
+                comp = by_ref.get(placement.ref)
+                if comp is None or placement.footprint is None:
+                    continue
+                pin_numbers = {p.number for p in comp.pins}
+                for pad in placement.footprint.pads:
+                    if pad.number not in pin_numbers:
+                        out.append(Warning(
+                            code="PCB_PAD_UNKNOWN_PIN", severity=Severity.ERROR,
+                            message=(
+                                f"Footprint pad '{pad.number}' on placement '{placement.ref}' "
+                                f"does not match any pin on that component."
+                            ),
+                            refs=[placement.ref, f"{placement.ref}.{pad.number}"],
+                        ))
+
+            if self.pcb.outline is not None:
+                outline = self.pcb.outline
+                if len(outline.points) < 3 and not outline.arcs:
+                    out.append(Warning(
+                        code="PCB_OUTLINE_TOO_FEW_POINTS", severity=Severity.WARNING,
+                        message=(
+                            f"Board outline has {len(outline.points)} polygon point(s) and no arcs; "
+                            "a valid outline needs at least 3 points or at least one arc segment."
+                        ),
+                        refs=[],
                     ))
 
         return out

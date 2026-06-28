@@ -1,0 +1,136 @@
+{
+  "project": {
+    "name": "rc_filter_pcb",
+    "source_format": "internal-json",
+    "schema_version": "0.1.0"
+  },
+  "components": [
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "value": "1k",
+      "symbol": "Device:R",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "pins": [
+        { "number": "1", "name": "A", "electrical_type": "passive" },
+        { "number": "2", "name": "B", "electrical_type": "passive" }
+      ]
+    },
+    {
+      "ref": "C1",
+      "type": "capacitor",
+      "value": "100n",
+      "symbol": "Device:C",
+      "footprint": "Capacitor_SMD:C_0603_1608Metric",
+      "pins": [
+        { "number": "1", "name": "A", "electrical_type": "passive" },
+        { "number": "2", "name": "B", "electrical_type": "passive" }
+      ]
+    },
+    {
+      "ref": "#PWR01",
+      "type": "power",
+      "value": "VIN",
+      "symbol": "power:VCC",
+      "pins": [ { "number": "1", "name": "VIN", "electrical_type": "power_in" } ]
+    },
+    {
+      "ref": "#PWR02",
+      "type": "ground",
+      "value": "GND",
+      "symbol": "power:GND",
+      "pins": [ { "number": "1", "name": "GND", "electrical_type": "power_in" } ]
+    }
+  ],
+  "nets": [
+    { "name": "VIN",  "net_class": "power",  "nodes": ["#PWR01.1", "R1.1"] },
+    { "name": "VOUT", "net_class": "signal", "nodes": ["R1.2", "C1.1"] },
+    { "name": "GND",  "net_class": "ground", "nodes": ["C1.2", "#PWR02.1"] }
+  ],
+  "wires": [],
+  "labels": [],
+  "warnings": [],
+  "pcb": {
+    "placements": [
+      {
+        "ref": "R1",
+        "x": 10.0,
+        "y": 10.0,
+        "rotation": 0.0,
+        "side": "top",
+        "footprint": {
+          "library_ref": "Resistor_SMD:R_0603_1608Metric",
+          "pads": [
+            {
+              "number": "1",
+              "pad_type": "smd",
+              "shape": "rect",
+              "size_x": 1.8,
+              "size_y": 1.2,
+              "position": { "x": -0.8, "y": 0.0 },
+              "layers": ["front_copper"]
+            },
+            {
+              "number": "2",
+              "pad_type": "smd",
+              "shape": "rect",
+              "size_x": 1.8,
+              "size_y": 1.2,
+              "position": { "x": 0.8, "y": 0.0 },
+              "layers": ["front_copper"]
+            }
+          ],
+          "model_3d": "Resistor_SMD/R_0603_1608Metric.step"
+        }
+      },
+      {
+        "ref": "C1",
+        "x": 20.0,
+        "y": 10.0,
+        "rotation": 90.0,
+        "side": "top",
+        "footprint": {
+          "library_ref": "Capacitor_SMD:C_0603_1608Metric",
+          "pads": [
+            {
+              "number": "1",
+              "pad_type": "smd",
+              "shape": "rect",
+              "size_x": 1.8,
+              "size_y": 1.2,
+              "position": { "x": -0.8, "y": 0.0 },
+              "layers": ["front_copper"]
+            },
+            {
+              "number": "2",
+              "pad_type": "smd",
+              "shape": "rect",
+              "size_x": 1.8,
+              "size_y": 1.2,
+              "position": { "x": 0.8, "y": 0.0 },
+              "layers": ["front_copper"]
+            }
+          ],
+          "model_3d": "Capacitor_SMD/C_0603_1608Metric.step"
+        }
+      }
+    ],
+    "layer_stack": [
+      { "name": "front_copper",  "kind": "copper",     "thickness_mm": 0.035 },
+      { "name": "front_mask",    "kind": "mask"                               },
+      { "name": "front_silk",    "kind": "silk"                               },
+      { "name": "core_1",        "kind": "dielectric", "thickness_mm": 1.5   },
+      { "name": "back_copper",   "kind": "copper",     "thickness_mm": 0.035 },
+      { "name": "back_mask",     "kind": "mask"                               }
+    ],
+    "outline": {
+      "points": [
+        { "x": 0.0,  "y": 0.0  },
+        { "x": 30.0, "y": 0.0  },
+        { "x": 30.0, "y": 20.0 },
+        { "x": 0.0,  "y": 20.0 }
+      ],
+      "arcs": []
+    }
+  }
+}
